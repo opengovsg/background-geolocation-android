@@ -18,6 +18,7 @@ def projDependencies = [
     [configuration: "implementation", dependency: androidLibs.playServicesLocation],
     [configuration: "implementation", dependency: androidLibs.supportCompat],
     [configuration: "implementation", dependency: androidLibs.appcompat],
+    [configuration: "implementation", dependency: libs.reactNative],
     [configuration: "implementation", dependency: libs.permissions,
         options: { exclude group: 'com.android.support', module: 'appcompat-v7'}],
     [configuration: "implementation", dependency: libs.logback],
