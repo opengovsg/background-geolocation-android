@@ -13,6 +13,14 @@ import android.accounts.Account;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.AlarmManager; // added
+import android.app.PendingIntent; // added
+import android.widget.Toast; // added
+import android.location.Location; // added
+import android.content.ComponentName; // added
+import android.content.pm.ResolveInfo; // added
+import android.content.pm.PackageManager; // added
+import android.location.LocationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -29,14 +37,18 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
-import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
+import android.os.PowerManager;
+import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+// import com.marianhello.bgloc.LocationManager; // added
+import com.marianhello.bgloc.BackgroundGeolocationFacade; // added
 import com.marianhello.bgloc.Config;
 import com.marianhello.bgloc.ConnectivityListener;
 import com.marianhello.bgloc.sync.NotificationHelper;
 import com.marianhello.bgloc.PluginException;
 import com.marianhello.bgloc.PostLocationTask;
+import com.marianhello.bgloc.messaging.LocationAlarmMessagingService; // added
 import com.marianhello.bgloc.ResourceResolver;
 import com.marianhello.bgloc.data.BackgroundActivity;
 import com.marianhello.bgloc.data.BackgroundLocation;
@@ -66,6 +78,16 @@ import static com.marianhello.bgloc.service.LocationServiceIntentBuilder.contain
 import static com.marianhello.bgloc.service.LocationServiceIntentBuilder.containsMessage;
 import static com.marianhello.bgloc.service.LocationServiceIntentBuilder.getCommand;
 import static com.marianhello.bgloc.service.LocationServiceIntentBuilder.getMessage;
+
+import java.util.Timer; // added
+import java.util.TimerTask; // added
+import java.text.SimpleDateFormat; // added
+import java.util.Date; // added
+import java.util.Calendar; // added
+import java.io.FileOutputStream; // added
+import com.github.jparkie.promise.Promise; // added
+import java.util.concurrent.TimeoutException; // added
+import java.util.List; // added
 
 public class LocationServiceImpl extends Service implements ProviderDelegate, LocationService {
 
@@ -118,8 +140,14 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
     private ServiceHandler mServiceHandler;
     private LocationDAO mLocationDAO;
     private PostLocationTask mPostLocationTask;
+    private LocationAlarmMessagingService mLocationAlarmMessagingService;
     private String mHeadlessTaskRunnerClass;
     private TaskRunner mHeadlessTaskRunner;
+
+    private AlarmManager alarmMgr; // added
+    private PendingIntent alarmIntent; // added
+    private PowerManager powerManager; // added
+    private PowerManager.WakeLock wakeLock; // added
 
     private long mServiceId = -1;
     private static boolean sIsRunning = false;
@@ -139,6 +167,30 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
         }
     }
 
+    private void addAutoStartup() {
+        try {
+            Intent intent = new Intent();
+            String manufacturer = android.os.Build.MANUFACTURER;
+            if ("xiaomi".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
+            } else if ("oppo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
+            } else if ("vivo".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
+            } else if ("Letv".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
+            } else if ("Honor".equalsIgnoreCase(manufacturer)) {
+                intent.setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity"));
+            }
+
+            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            if  (list.size() > 0) {
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * When binding to the service, we return an interface to our messenger
      * for sending messages to the service.
@@ -221,8 +273,29 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
             }
         });
 
+        Context alarmContext = getApplicationContext();
+        mLocationAlarmMessagingService = new LocationAlarmMessagingService(alarmContext);
+
         registerReceiver(connectivityChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         NotificationHelper.registerServiceChannel(this);
+
+        addAutoStartup();
+
+        Timer timer = new Timer();
+
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                ThreadUtils.runOnUiThread(new Runnable () {
+                    @Override
+                    public void run() {
+                        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
+                        Intent customEvent = new Intent("my-custom-event");
+                        // customEvent.putExtra("my-extra-data", "that's it");
+                        localBroadcastManager.sendBroadcast(customEvent);
+                    }
+                });
+        }}, 60000, 60000); // 60000 milliseconds = 1 minute
     }
 
     @Override
