@@ -34,33 +34,23 @@ public class LocationAlarmMessagingService {
     public void onReceive(Context context, Intent intent) {
       Log.d(TAG, "Timed alarm broadcast received");
 
-      // If the app is in the foreground we send it to the Messaging module
-      if (Utils.isAppInForeground(mContext)) {
-        Intent messagingEvent = new Intent(FOREGROUND_MESSAGE_EVENT);
-        messagingEvent.putExtra("my-extra-data", "that's it");
-        // Broadcast it so it is only available to the RN Application
-        LocalBroadcastManager
-          .getInstance(mContext)
-          .sendBroadcast(messagingEvent);
-      } else {
-        try {
-          // If the app is in the background we send it to the Headless JS Service
-          Intent headlessIntent = new Intent(
-            mContext,
-            LocationAlarmBackgroundMessagingService.class
-          );
-          headlessIntent.putExtra("my-extra-data", "that's it");
-          ComponentName name = mContext.startService(headlessIntent);
-          if (name != null) {
-            HeadlessJsTaskService.acquireWakeLockNow(mContext);
-          }
-        } catch (IllegalStateException ex) {
-          Log.e(
-            TAG,
-            "Background messages will only work if the message priority is set to 'high'",
-            ex
-          );
+      // Trigger the Headless JS Service regardless of whether app is in foreground or background
+      try {
+        Intent headlessIntent = new Intent(
+          mContext,
+          LocationAlarmBackgroundMessagingService.class
+        );
+        headlessIntent.putExtra("my-extra-data", "that's it");
+        ComponentName name = mContext.startService(headlessIntent);
+        if (name != null) {
+          HeadlessJsTaskService.acquireWakeLockNow(mContext);
         }
+      } catch (IllegalStateException ex) {
+        Log.e(
+          TAG,
+          "Background messages will only work if the message priority is set to 'high'",
+          ex
+        );
       }
     }
   }

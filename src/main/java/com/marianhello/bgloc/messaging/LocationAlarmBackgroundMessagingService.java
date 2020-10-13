@@ -24,7 +24,7 @@ public class LocationAlarmBackgroundMessagingService extends HeadlessJsTaskServi
         "AlarmEventBackgroundMessage",
         Arguments.fromBundle(extras),
         60000,
-        false /* does not allow to run in foreground */
+        true /* allow to run in foreground */
       );
     }
     return null;
