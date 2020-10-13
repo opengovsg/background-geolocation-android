@@ -125,6 +125,14 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
 
     public static final int MSG_ON_HTTP_AUTHORIZATION = 107;
 
+    /**
+     * Our Timer settings
+     * TIMER_EVENT_DELAY is the delay in ms before first task runs
+     * TIMER_EVENT_PERIOD is the time in ms between successive task executions
+     */
+    public static final long TIMER_EVENT_DELAY = 60000;
+    public static final long TIMER_EVENT_PERIOD = 300000;
+
     /** notification id */
     private static int NOTIFICATION_ID = 1;
 
@@ -295,7 +303,7 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
                         localBroadcastManager.sendBroadcast(customEvent);
                     }
                 });
-        }}, 60000, 60000); // 60000 milliseconds = 1 minute
+        }}, TIMER_EVENT_DELAY, TIMER_EVENT_PERIOD);
     }
 
     @Override
