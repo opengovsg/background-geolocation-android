@@ -183,8 +183,6 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
                 intent.setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
             } else if ("oppo".equalsIgnoreCase(manufacturer)) {
                 intent.setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
-            } else if ("vivo".equalsIgnoreCase(manufacturer)) {
-                intent.setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
             } else if ("Letv".equalsIgnoreCase(manufacturer)) {
                 intent.setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity"));
             } else if ("Honor".equalsIgnoreCase(manufacturer)) {
