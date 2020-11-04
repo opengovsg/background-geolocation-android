@@ -50,6 +50,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <receiver android:name="com.marianhello.bgloc.service.LocationServiceReceiver"/>
     </application>
 
     <uses-permission android:name="android.hardware.location" />

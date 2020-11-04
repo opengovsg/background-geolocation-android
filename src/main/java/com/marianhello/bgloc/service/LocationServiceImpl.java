@@ -287,21 +287,7 @@ public class LocationServiceImpl extends Service implements ProviderDelegate, Lo
 
         addAutoStartup();
 
-        Timer timer = new Timer();
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                ThreadUtils.runOnUiThread(new Runnable () {
-                    @Override
-                    public void run() {
-                        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(getApplicationContext());
-                        Intent customEvent = new Intent("my-custom-event");
-                        // customEvent.putExtra("my-extra-data", "that's it");
-                        localBroadcastManager.sendBroadcast(customEvent);
-                    }
-                });
-        }}, TIMER_EVENT_DELAY, TIMER_EVENT_PERIOD);
+        LocationServiceReceiver.scheduleExactAlarm(alarmContext, (AlarmManager) alarmContext.getSystemService(Context.ALARM_SERVICE));
     }
 
     @Override
